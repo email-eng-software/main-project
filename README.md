@@ -1,4 +1,4 @@
-# main-project
+# Menser
 Repositório que armazena todas alterações na aplicação.
 
 # Membros
