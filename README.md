@@ -1,5 +1,5 @@
 # Menser
-Repositório que armazena todas alterações na aplicação.
+Repositório com as informações da aplicação
 
 # Membros
 * Gustavo Lara dos Santos - Full Stack
