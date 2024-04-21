@@ -3,12 +3,12 @@ import React, { useState } from "react";
 import {
   Container,
   InputsContainer,
-  Title,
-  Button
+  Title
 } from "./style";
 
 import setToast from '../../utils/toast.utils';
 import Input from "../../components/Input";
+import Button from "../../components/Button";
 
 function SignUp() {
   const [name, setName] = useState();
