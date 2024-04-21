@@ -17,7 +17,7 @@ export const StyledInput = styled.input`
   width: 100%;
   height: 48px;
   border-radius: 8px;
-  border: 1px solid #8c8c8c;
+  border: ${({ error }) => error ? '1px solid #ff0000' : '1px solid #8c8c8c'};
   font-family: Poppins, Arial, Helvetica, sans-serif;
   font-weight: 600;
   font-size: 14px;

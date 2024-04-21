@@ -6,7 +6,7 @@ import {
   InputWrapper
 } from "./style";
 
-function Input({ label, id, name, placeholder, type, value, onChange}) {
+function Input({ label, id, name, placeholder, type, value, onChange, error}) {
   return (
     <InputWrapper>
         <InputLabel>{label}</InputLabel>
@@ -18,6 +18,7 @@ function Input({ label, id, name, placeholder, type, value, onChange}) {
           onChange={onChange}
           type={type}
           value={value}
+          error={error}
         />
     </InputWrapper>
   )
