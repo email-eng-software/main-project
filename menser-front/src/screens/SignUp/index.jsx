@@ -11,30 +11,51 @@ import Input from "../../components/Input";
 import Button from "../../components/Button";
 
 function SignUp() {
-  const [name, setName] = useState();
-  const [surname, setSurname] = useState();
-  const [email, setEmail] = useState();
-  const [password, setPassword] = useState();
+  const [userInfos, setUserInfos] = useState({
+    name: '',
+    surname: '',
+    email: '',
+    password: '',
+  });
+  const [fieldErrors, setFieldErrors] = useState({
+    name: false,
+    surname: false,
+    email: false,
+    password: false,
+  });
 
   const validateFields = () => {
-    if(!name || !surname || !email || !password) {
+    if(!userInfos.name || !userInfos.surname || !userInfos.email || !userInfos.password) {
       setToast('error', 'Preencha todos os campos.');
+      setFieldErrors({
+        name: !userInfos.name,
+        surname: !userInfos.surname,
+        email: !userInfos.email,
+        password: !userInfos.password,
+      });
       return true;
     }
-    if (!String(email)
+    if (!String(userInfos.email)
     .toLowerCase()
     .match(
       /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
     )) {
       setToast('error', 'Insira um email válido.');
+      setFieldErrors({ ...fieldErrors, email: true });
       return true;
     }
-    if (password.length <= 8) {
+    if (userInfos.password.length <= 8) {
       setToast('error', 'Senha precisa ter ao menos 8 dígitos');
+      setFieldErrors({ ...fieldErrors, password: true });
       return true;
     }
     return false;
   }
+
+  const handleChange = (name, value) => {
+    setUserInfos({ ...userInfos, [name]: value });
+    setFieldErrors({ ...fieldErrors, [name]: false });
+  };
 
   const handleClick = () => {
     const hasError = validateFields();
@@ -52,18 +73,20 @@ function SignUp() {
           id="name"
           name="name"
           placeholder="Insira seu nome"
-          onChange={(event) => setName(event.target.value)}
+          onChange={(event) => handleChange('name', event.target.value)}
           type="string"
-          value={name}
+          value={userInfos.name}
+          error={fieldErrors.name}
         />
         <Input
           label="Sobrenome"
           id="surname"
           name="surname"
           placeholder="Insira seu sobrenome"
-          onChange={(event) => setSurname(event.target.value)}
+          onChange={(event) => handleChange('surname', event.target.value)}
           type="string"
-          value={surname}
+          value={userInfos.surname}
+          error={fieldErrors.surname}
         />
         <Input
           label="Email"
@@ -71,9 +94,10 @@ function SignUp() {
           name="email"
           placeholder="Insira seu email"
           required
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) => handleChange('email', event.target.value)}
           type="string"
-          value={email}
+          value={userInfos.email}
+          error={fieldErrors.email}
         />
         <Input
           label="Senha"
@@ -81,9 +105,10 @@ function SignUp() {
           name="senha"
           placeholder="Insira sua senha"
           required
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(event) => handleChange('password', event.target.value)}
           type="password"
-          value={password}
+          value={userInfos.password}
+          error={fieldErrors.password}
         />
         <Button onClick={handleClick}>Cadastrar</Button>
       </InputsContainer>
