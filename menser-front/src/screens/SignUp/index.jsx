@@ -4,10 +4,11 @@ import {
   Container,
   InputsContainer,
   Title,
-  Input,
-  InputLabel,
   Button
 } from "./style";
+
+import setToast from '../../utils/toast.utils';
+import Input from "../../components/Input";
 
 function SignUp() {
   const [name, setName] = useState();
@@ -15,32 +16,34 @@ function SignUp() {
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
 
+  const handleClick = () => {
+    setToast('error', 'Preencha todos os campos');
+  }
+
   return (
     <Container>
       <InputsContainer>
         <Title>Faça seu cadastro</Title>
-        <InputLabel>Nome</InputLabel>
         <Input
+          label="Nome"
           id="name"
           name="name"
           placeholder="Insira seu nome"
-          required
           onChange={(event) => setName(event.target.value)}
           type="string"
           value={name}
         />
-        <InputLabel>Sobrenome</InputLabel>
         <Input
+          label="Sobrenome"
           id="surname"
           name="surname"
           placeholder="Insira seu sobrenome"
-          required
           onChange={(event) => setSurname(event.target.value)}
           type="string"
           value={surname}
         />
-        <InputLabel>Email</InputLabel>
         <Input
+          label="Email"
           id="email"
           name="email"
           placeholder="Insira seu email"
@@ -49,8 +52,8 @@ function SignUp() {
           type="string"
           value={email}
         />
-        <InputLabel>Senha</InputLabel>
         <Input
+          label="Senha"
           id="senha"
           name="senha"
           placeholder="Insira sua senha"
@@ -59,7 +62,7 @@ function SignUp() {
           type="password"
           value={password}
         />
-        <Button onClick={() => console.log(name, surname, email, password)}>Cadastrar</Button>
+        <Button onClick={handleClick}>Cadastrar</Button>
       </InputsContainer>
     </Container>
   )
