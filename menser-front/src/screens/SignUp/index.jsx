@@ -16,8 +16,31 @@ function SignUp() {
   const [email, setEmail] = useState();
   const [password, setPassword] = useState();
 
+  const validateFields = () => {
+    if(!name || !surname || !email || !password) {
+      setToast('error', 'Preencha todos os campos.');
+      return true;
+    }
+    if (!String(email)
+    .toLowerCase()
+    .match(
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    )) {
+      setToast('error', 'Insira um email válido.');
+      return true;
+    }
+    if (password.length <= 8) {
+      setToast('error', 'Senha precisa ter ao menos 8 dígitos');
+      return true;
+    }
+    return false;
+  }
+
   const handleClick = () => {
-    setToast('error', 'Preencha todos os campos');
+    const hasError = validateFields();
+    if(!hasError) {
+      setToast('success', 'Usuário cadastrado com sucesso.');
+    }
   }
 
   return (
