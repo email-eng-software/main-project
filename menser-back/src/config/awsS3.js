@@ -38,7 +38,7 @@ export async function getFile(key) {
 }
 
 export async function uploadFile({ file, ACL }) {
-  const key = randomFileName('algo');
+  const key = randomFileName(file.name);
   const params = {
     Bucket: process.env.AWS_BUCKET_NAME,
     Body: file.buffer,
