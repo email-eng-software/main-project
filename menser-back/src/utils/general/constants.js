@@ -30,19 +30,15 @@ export const EXIT_STATUS = {
 };
 
 // Binary data supported configuration
-export const DOCUMENTS_CONFIG = {
-  fileName: 'Document',
-  allowedMimeTypes: ['text/plain', 'application/pdf'],
-  sizeLimitInMB: 15,
-};
-export const PICTURES_CONFIG = {
-  fileName: 'Picture',
-  allowedMimeTypes: ['image/jpeg', 'image/pjpeg', 'image/png', 'image/gif'],
-  sizeLimitInMB: 5,
-};
-export const VIDEOS_CONFIG = {
-  fileName: 'Video',
+export const ATTACHMENT_CONFIG = {
+  fileName: 'Attachment',
   allowedMimeTypes: [
+    'text/plain',
+    'application/pdf',
+    'image/jpeg',
+    'image/pjpeg',
+    'image/png',
+    'image/gif',
     'video/x-flv',
     'video/mp4',
     'video/MP2T',
@@ -51,24 +47,18 @@ export const VIDEOS_CONFIG = {
     'video/x-msvideo',
     'video/x-ms-wmv',
   ],
-  sizeLimitInMB: 500,
+  sizeLimitInMB: 25,
+};
+export const PICTURE_CONFIG = {
+  fileName: 'Picture',
+  allowedMimeTypes: ['image/jpeg', 'image/pjpeg', 'image/png', 'image/gif'],
+  sizeLimitInMB: 5,
 };
 
 // Table names
 export const COLLECTION_NAMES = {
   USER: 'users',
-  CATEGORY: 'categories',
-  PRODUCT: 'products',
-  COUNTOUR_MAP: 'countourmaps',
-  STABILITY_ANALYSIS: 'stabilityanalysis',
-  PROFILE_ANALYSIS: 'profileanalysis',
-  COURSE: 'courses',
-  CHAPTER: 'chapters',
-  VIDEO: 'videos',
-  FILE: 'files',
-  USER_CERTIFICATE: 'usercertificates',
-  USER_PROGRESS: 'userprogresses',
-  USER_COURSE: 'usercourses',
   USER_SESSION_TOKEN: 'usersessiontokens',
-  USER_PWD_TOKEN: 'userpwdtokens',
+  MESSAGE: 'messages',
+  MESSAGE_RECIPIENTS: 'messagerecipents',
 };

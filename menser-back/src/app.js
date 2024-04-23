@@ -22,6 +22,9 @@ else app.set('trust proxy', 1); // trust first proxy
 
 app.use(express.static(path.join(__dirname, '../../menser-front/build')));
 
+// Server routes
+app.use('/api', routes);
+
 // Non existing routes in the server
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../../client/dist/index.html'));

@@ -9,6 +9,7 @@ export function signSessionJwts(user) {
     { expiresIn: +process.env.ACCESS_TOKEN_EXPIRE }, // in seconds
   );
   const refreshToken = jwt.sign(
+    // eslint-disable-next-line no-underscore-dangle
     { userId: user._id },
     process.env.REFRESH_TOKEN_SECRET,
     { expiresIn: +process.env.REFRESH_TOKEN_EXPIRE }, // in seconds
