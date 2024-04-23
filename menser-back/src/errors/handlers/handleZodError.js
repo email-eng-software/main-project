@@ -9,8 +9,9 @@ export function isZodError(err) {
 export function handleZodError(err) {
   const msg = err.errors.map(({ message }) => message).join('; ');
 
-  if (msg === ERROR_NAMES.UNAUTHORIZED)
+  if (msg === ERROR_NAMES.UNAUTHORIZED) {
     return new UnauthorizedError('Invalid token'); // Only case is in the refresh token route
+  }
 
   return new BadRequest(`Request validation error(s): ${msg}`);
 }
