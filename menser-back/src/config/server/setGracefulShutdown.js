@@ -12,7 +12,7 @@ export default function setGracefulShutdown({
       serverConnection.close(async () => {
         try {
           await databaseConnection.connection.close(false);
-          logger.info(`App exited with success`);
+          logger.info('App exited with success');
           process.exit(EXIT_STATUS.SUCCESS);
         } catch (error) {
           logger.error(error, 'App exited with failure');

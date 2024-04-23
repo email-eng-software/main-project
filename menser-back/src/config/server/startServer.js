@@ -8,10 +8,10 @@ import setGracefulShutdown from './setGracefulShutdown.js';
 
 export default async function startServer() {
   try {
-    // const databaseConnection = await mongoConfig();
+    const databaseConnection = await mongoConfig();
     const serverConnection = await expressConfig();
 
-    // setGracefulShutdown({ serverConnection, databaseConnection });
+    setGracefulShutdown({ serverConnection, databaseConnection });
   } catch (err) {
     logger.error(err, 'App exited with failure');
     process.exit(EXIT_STATUS.FAILURE);
