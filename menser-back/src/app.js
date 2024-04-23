@@ -6,6 +6,8 @@ import morgan from 'morgan';
 import fileDirName from './utils/general/fileDirName.js';
 import IS_DEV_ENV from './utils/general/isDevEnv.js';
 
+import * as awsS3 from './config/awsS3.js';
+
 const app = express();
 
 // Middlewares
@@ -18,6 +20,6 @@ if (IS_DEV_ENV) app.use(morgan('dev'));
 else app.set('trust proxy', 1); // trust first proxy
 
 const { __dirname } = fileDirName(import.meta.url);
-app.use(express.static(path.join(__dirname, '../../client/dist')));
+app.use(express.static(path.join(__dirname, '../../menser-front/build')));
 
 export default app;

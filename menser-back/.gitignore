@@ -10,9 +10,6 @@ lerna-debug.log*
 temp
 
 node_modules
-.env
-.env.development
-.env.production
 .editorconfig
 
 # Editor directories and files
@@ -28,3 +25,13 @@ node_modules
 
 #dotenv
 .env
+.env
+.env.development
+.env.production
+
+#docker
+*dockervolume
+*localstack
+*data
+
+
