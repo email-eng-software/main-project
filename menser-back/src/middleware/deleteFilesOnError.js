@@ -1,5 +1,5 @@
 import logger from '../config/logger.js';
-import * as awsS3 from '../config/S3/awsS3.js';
+import * as awsS3 from '../config/awsS3.js';
 
 const deleteFilesOnError = async (err, req, res, next) => {
   const { files, file } = req;

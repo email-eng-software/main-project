@@ -7,6 +7,7 @@ import fileDirName from './utils/general/fileDirName.js';
 import IS_DEV_ENV from './utils/general/isDevEnv.js';
 import deleteFilesOnError from './middleware/deleteFilesOnError.js';
 import errorHandler from './errors/handlers/handler.js';
+import routes from './routes/index.js';
 
 const app = express();
 const { __dirname } = fileDirName(import.meta.url);
