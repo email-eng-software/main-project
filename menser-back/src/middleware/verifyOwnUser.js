@@ -5,8 +5,9 @@ const verifyOwnUser = asyncHandler(async (req, res, next) => {
   const requestUserId = req.params._id || req.params.user || req.body.user;
   const authUserId = req.user._id;
 
-  if (requestUserId !== authUserId)
+  if (requestUserId !== authUserId && !req.user.isAdmin) {
     throw new ForbiddenError('Forbidden action. Not same user');
+  }
 
   next();
 });

@@ -4,6 +4,8 @@ import { hashPassword } from '../utils/libs/brcypt.js';
 import UserSessionTokenModel from './UserSessionTokenModel.js';
 import PictureFileSchema from '../utils/libs/mongoose/subdocuments/PictureFileSchema.js';
 import * as awsS3 from '../config/awsS3.js';
+import MessageModel from './MessageModel.js';
+import MessageRecipientsModel from './MessageRecipientsModel.js';
 
 const UserSchema = new mongoose.Schema(
   {
@@ -58,10 +60,16 @@ UserSchema.pre(
   { document: true, query: false }, // More details on https://mongoosejs.com/docs/api/schema.html#schema_Schema-pre
   async function () {
     return Promise.all([
-      awsS3.deleteFile(this.profile.key),
+      awsS3.deleteFile(this.profilePicture.key),
       UserSessionTokenModel.deleteMany({ user: this._id }).exec(),
-      // TODO: soft delete sended messages
-      // TODO: soft delete received messages
+      MessageModel.updateMany(
+        { sender: this._id },
+        { $set: { isDeleted: true } },
+      ),
+      MessageRecipientsModel.updateMany(
+        { recipient: this._id },
+        { $set: { isDeleted: true } },
+      ),
     ]);
   },
 );

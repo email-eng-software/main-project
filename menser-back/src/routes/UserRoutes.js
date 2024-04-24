@@ -15,11 +15,7 @@ const processFile = multerConfig({
 });
 
 UserRoutes.route('/')
-  .get(
-    // verifyJWT,
-    // verifyAdmin,
-    UserController.get,
-  )
+  .get(verifyJWT, verifyAdmin, UserController.get)
   .post(processFile.single('profilePicture'), UserController.create);
 
 UserRoutes.route('/:_id')
