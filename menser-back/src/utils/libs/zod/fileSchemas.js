@@ -9,11 +9,15 @@ import numToMegaBytes from '../../general/numToMegaBytes.js';
 const schema = ({ fileName, allowedMimeTypes, sizeLimitInMB }) =>
   z
     .object({
+      fieldname: z.string().optional(),
       originalname: z.string({
         required_error: `${fileName} original name is required`,
       }),
       key: z.string({
         required_error: `${fileName} key is required`,
+      }),
+      location: z.string({
+        required_error: `${fileName} location is required`,
       }),
       size: z
         .number({ required_error: `${fileName} size is required` })

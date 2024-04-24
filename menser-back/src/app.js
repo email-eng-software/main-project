@@ -6,8 +6,8 @@ import morgan from 'morgan';
 import fileDirName from './utils/general/fileDirName.js';
 import IS_DEV_ENV from './utils/general/isDevEnv.js';
 import deleteFilesOnError from './middleware/deleteFilesOnError.js';
-import errorHandler from './errors/handlers/handler.js';
 import routes from './routes/index.js';
+import errorHandler from './middleware/errorHandler.js';
 
 const app = express();
 const { __dirname } = fileDirName(import.meta.url);
@@ -25,14 +25,19 @@ app.use(express.static(path.join(__dirname, '../../menser-front/build')));
 
 // Server routes
 app.use('/api', routes);
-
-// Non existing routes in the server
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
-});
+// import * as awsS3 from './config/awsS3.js';
+// app.use('/api/buckets', async (req, res) => {
+//   // await awsS3.createBucket(process.env.AWS_BUCKET_NAME);
+//   const buckets = await awsS3.listBuckets();
+//   res.status(200).json({ buckets });
+// });
 
 // Needs to be after the routes
 app.use(deleteFilesOnError);
 app.use(errorHandler);
+
+app.use((req, res) => {
+  res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
+});
 
 export default app;

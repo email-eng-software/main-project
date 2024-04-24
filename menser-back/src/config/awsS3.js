@@ -22,7 +22,7 @@ const s3Configs = {
   },
 };
 if (IS_DEV_ENV) {
-  s3Configs.endpoint = 'http://localhost:4566';
+  s3Configs.endpoint = process.env.AWS_S3_URL;
   s3Configs.forcePathStyle = true;
 }
 
