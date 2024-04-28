@@ -2,16 +2,16 @@ import React from "react";
 
 import "../../styles/tailwind.css"
 import Header from "../../components/Header"
-import MessageList from "../../components/MessageList";
+import MessagePage from "../../components/MessagePage";
 
-function Home() {
+function Message() {
   return (
     <div className="h-screen relative">
       <Header>
-        <MessageList />
+        <MessagePage />
       </Header>
     </div>
   )
 }
 
-export default Home;
+export default Message;
