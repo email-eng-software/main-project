@@ -20,9 +20,7 @@ export async function getById(_id) {
 }
 
 export async function create(inputData) {
-  const { password, ...newUser } = (
-    await UserModel.create(inputData)
-  ).toObject();
+  const { password, ...newUser } = (await UserModel.create(inputData)).toObject();
 
   return newUser;
 }

@@ -18,9 +18,17 @@ const MessageSchema = new mongoose.Schema(
       required: true,
       validate: [existingRef(COLLECTION_NAMES.USER)],
     },
+    recipientsStr: {
+      type: String,
+      default: null,
+    },
+    subject: {
+      type: String,
+      default: null,
+    },
     content: {
       type: String,
-      required: true,
+      default: null,
     },
     status: {
       type: String,
@@ -31,7 +39,6 @@ const MessageSchema = new mongoose.Schema(
     responseTo: {
       type: ObjectId,
       ref: COLLECTION_NAMES.MESSAGE,
-      validate: [existingRef(COLLECTION_NAMES.MESSAGE)],
       default: null,
     },
     isFavorite: {
@@ -52,7 +59,10 @@ const MessageSchema = new mongoose.Schema(
     },
     attachments: {
       type: [AttachmentFileSchema],
-      required: true,
+    },
+    sendedAt: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: true, versionKey: false },

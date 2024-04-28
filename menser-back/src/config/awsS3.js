@@ -67,7 +67,7 @@ export async function deleteFile(key) {
 }
 
 export async function deleteFiles(keys) {
-  if (!keys.length) return;
+  if (!keys?.length) return;
 
   const objects = keys.map((key) => ({
     Key: key,

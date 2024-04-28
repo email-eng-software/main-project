@@ -16,10 +16,7 @@ const FileSchema = new mongoose.Schema({
 
 FileSchema.pre('save', function (next) {
   if (IS_DEV_ENV) {
-    this.url = this.url.replace(
-      /^(http:\/\/[^/]+\/)(.*)/,
-      `${process.env.AWS_S3_URL}/$2`,
-    );
+    this.url = this.url.replace(/^(http:\/\/[^/]+\/)(.*)/, `${process.env.AWS_S3_URL}/$2`);
   }
 
   next();

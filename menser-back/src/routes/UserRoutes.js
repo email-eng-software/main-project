@@ -9,7 +9,7 @@ import { PICTURE_CONFIG } from '../utils/general/constants.js';
 const UserRoutes = Router();
 
 const processFile = multerConfig({
-  access: 'private',
+  access: 'public',
   allowedMimes: PICTURE_CONFIG.allowedMimeTypes,
   sizeLimitInMB: PICTURE_CONFIG.sizeLimitInMB,
 });

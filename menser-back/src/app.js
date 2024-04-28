@@ -3,11 +3,14 @@ import express from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
+import cors from 'cors';
+
 import fileDirName from './utils/general/fileDirName.js';
 import IS_DEV_ENV from './utils/general/isDevEnv.js';
 import deleteFilesOnError from './middleware/deleteFilesOnError.js';
 import routes from './routes/index.js';
 import errorHandler from './middleware/errorHandler.js';
+import corsOptions from './config/cors.js';
 
 const app = express();
 const { __dirname } = fileDirName(import.meta.url);
@@ -15,6 +18,7 @@ const { __dirname } = fileDirName(import.meta.url);
 // Middlewares
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cors(corsOptions));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(helmet());
 
