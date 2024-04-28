@@ -59,6 +59,7 @@ function SignUp() {
 
   const handleClick = () => {
     const hasError = validateFields();
+    console.log('SignUp function');
     if(!hasError) {
       setToast('success', 'Usuário cadastrado com sucesso.');
     }
@@ -67,7 +68,7 @@ function SignUp() {
   return (
     <Container>
       <InputsContainer>
-        <Title>Faça seu cadastro</Title>
+        <Title>Faça seu Cadastro</Title>
         <Input
           label="Nome"
           id="name"
