@@ -1,0 +1,44 @@
+{
+  "name": "menser-back",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Backend do projeto \"Menser\" criado para a disciplina de Engenharia de Software",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "start:prod": "node --env-file=.env src/index.js",
+    "start:dev": "docker compose up -d && node --env-file=.env.development --watch src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.0.2",
+    "@eslint/js": "^9.1.1",
+    "eslint": "^7.32.0 || ^8.2.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-jsx-a11y": "^6.5.1",
+    "eslint-plugin-react": "^7.28.0",
+    "eslint-plugin-react-hooks": "^4.3.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.2.5"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.556.0",
+    "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.3.2",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "multer-s3": "^3.0.1",
+    "pino": "^8.20.0",
+    "pino-pretty": "^11.0.0",
+    "zod": "^3.23.4"
+  }
+}
