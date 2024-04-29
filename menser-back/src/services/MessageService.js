@@ -376,7 +376,6 @@ export async function getDraft({ userId, search, limit, page }) {
 }
 
 export async function getArchived({ userId, search, limit, page }) {
-  console.log({ userId });
   const pipeline = [
     {
       $match: {

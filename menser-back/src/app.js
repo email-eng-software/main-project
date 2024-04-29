@@ -29,12 +29,6 @@ app.use(express.static(path.join(__dirname, '../../menser-front/build')));
 
 // Server routes
 app.use('/api', routes);
-// import * as awsS3 from './config/awsS3.js';
-// app.use('/api/buckets', async (req, res) => {
-//   // await awsS3.createBucket(process.env.AWS_BUCKET_NAME);
-//   const buckets = await awsS3.listBuckets();
-//   res.status(200).json({ buckets });
-// });
 
 // Needs to be after the routes
 app.use(deleteFilesOnError);
