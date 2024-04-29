@@ -22,7 +22,7 @@ function AppRoutes() {
       element: <SignUp />,
     },
     {
-      path: '/create',
+      path: '/new',
       element: <NewMessage />,
     },
     {
