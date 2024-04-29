@@ -1,20 +1,10 @@
 /* eslint arrow-body-style: 0 */
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Textarea, Label, TextInput } from 'flowbite-react';
 
 import setToast from '../utils/toast.utils';
-import {
-  useGetMessageById,
-  useSendMessage,
-  useUpdateMessageDraft,
-} from '../hooks/query/messages';
+import { useGetMessageById, useSendMessage } from '../hooks/query/messages';
 
 const Spinner = (
   <div role="status">
@@ -91,30 +81,6 @@ export default function CreateMessage() {
         );
       },
     });
-
-  // const { mutate: updateMessageDraft } = useUpdateMessageDraft({
-  //   onError: (err) => {
-  //     console.error(err);
-  //     setToast(
-  //       'error',
-  //       'Ocorreu um problema no servidor. Tente novamente mais tarde'
-  //     );
-  //   },
-  // });
-  // const updateMessageDraftEvent = useCallback(() => {
-  //   updateMessageDraft({
-  //     messageId,
-  //     inputData: {
-  //       recipientsStr: formFields.recipientsStr,
-  //       subject: formFields.subject,
-  //       content: formFields.content,
-  //     },
-  //   });
-  // }, [messageId]);
-
-  // useLayoutEffect(() => {
-  //   return updateMessageDraftEvent;
-  // }, [updateMessageDraftEvent]);
 
   const validateFields = () => {
     if (!formFields.recipientsStr || !formFields.content) {
