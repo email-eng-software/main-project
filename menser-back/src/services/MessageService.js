@@ -13,7 +13,6 @@ export async function getSended({ userId, search, limit, page }) {
     {
       $match: {
         isDeleted: false,
-        isArchived: false,
         status: STATUS.SENDED,
         sender: new ObjectId(userId),
         responseTo: null,
@@ -106,6 +105,7 @@ export async function getSended({ userId, search, limit, page }) {
     {
       $project: {
         _id: '$lastSended._id',
+        parentId: '$_id',
         totalExchangedMessages: { $add: [{ $size: '$responses' }, 1] },
         sender: {
           _id: '$senderDoc._id',
@@ -160,7 +160,6 @@ export async function getReceived({ userId, search, limit, page }) {
     {
       $match: {
         isDeleted: false,
-        isArchived: false,
         recipient: new ObjectId(userId),
       },
     },
@@ -173,7 +172,16 @@ export async function getReceived({ userId, search, limit, page }) {
       },
     },
     { $unwind: '$messageDoc' },
-    { $replaceRoot: { newRoot: '$messageDoc' } },
+    {
+      $replaceRoot: {
+        newRoot: {
+          $mergeObjects: [
+            '$messageDoc',
+            { isArchived: '$isArchived', isDeleted: '$isDeleted', isRead: '$isRead' },
+          ],
+        },
+      },
+    },
     {
       $match: {
         status: STATUS.SENDED,
@@ -185,9 +193,19 @@ export async function getReceived({ userId, search, limit, page }) {
         startWith: '$_id',
         connectFromField: '_id',
         connectToField: 'responseTo',
-        as: 'responses',
+        as: 'responsesUp',
       },
     },
+    {
+      $graphLookup: {
+        from: COLLECTION_NAMES.MESSAGE,
+        startWith: '$responseTo',
+        connectFromField: 'responseTo',
+        connectToField: '_id',
+        as: 'responsesDown',
+      },
+    },
+    { $set: { responses: { $concatArrays: ['$responsesUp', '$responsesDown'] } } },
     {
       $set: {
         lastSended: {
@@ -266,6 +284,14 @@ export async function getReceived({ userId, search, limit, page }) {
     {
       $project: {
         _id: '$lastSended._id',
+        parent: {
+          $first: {
+            $filter: {
+              input: '$responses',
+              cond: { $eq: ['$$this.responseTo', null] },
+            },
+          },
+        },
         totalExchangedMessages: { $add: [{ $size: '$responses' }, 1] },
         sender: {
           _id: '$senderDoc._id',
@@ -277,6 +303,9 @@ export async function getReceived({ userId, search, limit, page }) {
             url: '$senderDoc.profilePicture.url',
           },
         },
+        isArchived: '$isArchived',
+        isDeleted: '$isDeleted',
+        isRead: '$isDeleted',
         subject: '$lastSended.subject',
         content: '$lastSended.content',
         recipients: {
@@ -311,8 +340,12 @@ export async function getReceived({ userId, search, limit, page }) {
     {
       $group: {
         _id: '$_id',
+        parentId: { $first: '$parent._id' },
         totalExchangedMessages: { $first: '$totalExchangedMessages' },
         sender: { $first: '$sender' },
+        isArchived: { $first: '$isArchived' },
+        isDeleted: { $first: '$isDeleted' },
+        isRead: { $first: '$isRead' },
         subject: { $first: '$subject' },
         content: { $first: '$content' },
         recipients: { $first: '$recipients' },
@@ -343,11 +376,11 @@ export async function getDraft({ userId, search, limit, page }) {
 }
 
 export async function getArchived({ userId, search, limit, page }) {
+  console.log({ userId });
   const pipeline = [
     {
       $match: {
         isDeleted: false,
-        isArchived: true,
         status: STATUS.SENDED,
       },
     },
@@ -363,8 +396,15 @@ export async function getArchived({ userId, search, limit, page }) {
     {
       $match: {
         $or: [
-          { sender: new ObjectId(userId) },
-          { 'messageRecipients.recipient': new ObjectId(userId) },
+          { $and: [{ sender: new ObjectId(userId) }, { isArchived: true }] },
+          {
+            $and: [
+              {
+                'messageRecipients.recipient': new ObjectId(userId),
+                'messageRecipients.isArchived': true,
+              },
+            ],
+          },
         ],
       },
     },
@@ -402,6 +442,27 @@ export async function getArchived({ userId, search, limit, page }) {
             url: '$senderDoc.profilePicture.url',
           },
         },
+        isArchived: {
+          $cond: {
+            if: { $eq: ['$sender', new ObjectId(userId)] },
+            then: '$isArchived',
+            else: '$messageRecipients.isArchived',
+          },
+        },
+        isDeleted: {
+          $cond: {
+            if: { $eq: ['$sender', new ObjectId(userId)] },
+            then: '$isDeleted',
+            else: '$messageRecipients.isDeleted',
+          },
+        },
+        isRead: {
+          $cond: {
+            if: { $eq: ['$sender', new ObjectId(userId)] },
+            then: null,
+            else: '$messageRecipients.isRead',
+          },
+        },
         subject: '$subject',
         content: '$content',
         recipients: {
@@ -431,6 +492,9 @@ export async function getArchived({ userId, search, limit, page }) {
       $group: {
         _id: '$_id',
         sender: { $first: '$sender' },
+        isArchived: { $first: '$isArchived' },
+        isDeleted: { $first: '$isDeleted' },
+        isRead: { $first: '$isRead' },
         subject: { $first: '$subject' },
         content: { $first: '$content' },
         recipients: { $push: '$recipients' },
@@ -464,6 +528,188 @@ export async function saveDraft(inputData) {
   }
 
   return MessageModel.create(inputData);
+}
+
+export function getByParentId(parentId) {
+  return MessageModel.aggregate([
+    { $match: { _id: new ObjectId(parentId), status: STATUS.SENDED, responseTo: null } },
+    {
+      $graphLookup: {
+        from: COLLECTION_NAMES.MESSAGE,
+        startWith: '$_id',
+        connectFromField: '_id',
+        connectToField: 'responseTo',
+        depthField: 'level',
+        as: 'responses',
+      },
+    },
+    {
+      $unwind: {
+        path: '$responses',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    { $sort: { 'responses.level': -1 } },
+    {
+      $group: {
+        _id: '$_id',
+        responseTo: { $first: '$responseTo' },
+        sender: { $first: '$sender' },
+        subject: { $first: '$subject' },
+        content: { $first: '$content' },
+        recipientsStr: { $first: '$recipientsStr' },
+        responses: { $push: '$responses' },
+      },
+    },
+    {
+      $addFields: {
+        responses: {
+          $reduce: {
+            input: '$responses',
+            initialValue: { level: -1, presentChild: [], prevChild: [] },
+            in: {
+              $let: {
+                vars: {
+                  prev: {
+                    $cond: [
+                      { $eq: ['$$value.level', '$$this.level'] },
+                      '$$value.prevChild',
+                      '$$value.presentChild',
+                    ],
+                  },
+                  current: {
+                    $cond: [{ $eq: ['$$value.level', '$$this.level'] }, '$$value.presentChild', []],
+                  },
+                },
+                in: {
+                  level: '$$this.level',
+                  prevChild: '$$prev',
+                  presentChild: {
+                    $concatArrays: [
+                      '$$current',
+                      [
+                        {
+                          $mergeObjects: [
+                            '$$this',
+                            // {
+                            //   _id: '$$this._id',
+                            //   sender: '$$this.sender',
+                            //   responseTo: '$$this.responseTo',
+                            // },
+                            {
+                              responses: {
+                                $filter: {
+                                  input: '$$prev',
+                                  as: 'e',
+                                  cond: { $eq: ['$$e.responseTo', '$$this._id'] },
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    { $addFields: { responses: '$responses.presentChild' } },
+  ]);
+}
+export async function getDraftById(_id) {
+  const foundDraft = await MessageModel.findOne({ _id, status: STATUS.DRAFT }).lean().exec();
+  if (!foundDraft) throw new NotFoundError('Message not found');
+
+  return foundDraft;
+}
+export async function getArchivedById(_id) {
+  const foundArchivedList = await MessageModel.aggregate([
+    {
+      $match: {
+        _id: new ObjectId(_id),
+        status: STATUS.SENDED,
+        isArchived: true,
+      },
+    },
+    {
+      $lookup: {
+        from: COLLECTION_NAMES.MESSAGE_RECIPIENTS,
+        localField: '_id',
+        foreignField: 'message',
+        as: 'messageRecipients',
+      },
+    },
+    {
+      $lookup: {
+        from: COLLECTION_NAMES.USER,
+        localField: 'sender',
+        foreignField: '_id',
+        as: 'senderDoc',
+      },
+    },
+    {
+      $unwind: '$senderDoc',
+    },
+    {
+      $lookup: {
+        from: COLLECTION_NAMES.USER,
+        localField: 'messageRecipients.recipient',
+        foreignField: '_id',
+        as: 'recipients',
+      },
+    },
+    {
+      $project: {
+        _id: '$_id',
+        sender: {
+          _id: '$senderDoc._id',
+          firstName: '$senderDoc.firstName',
+          lastName: '$senderDoc.lastName',
+          email: '$senderDoc.email',
+          profilePicture: {
+            name: '$senderDoc.profilePicture.name',
+            url: '$senderDoc.profilePicture.url',
+          },
+        },
+        subject: '$subject',
+        content: '$content',
+        recipients: {
+          $map: {
+            input: '$recipients',
+            as: 'recipient',
+            in: {
+              _id: '$$recipient._id',
+              firstName: '$$recipient.firstName',
+              lastName: '$$recipient.lastName',
+              email: '$$recipient.email',
+              profilePicture: {
+                name: '$$recipient.profilePicture.name',
+                url: '$$recipient.profilePicture.url',
+              },
+            },
+          },
+        },
+        attachments: {
+          $map: {
+            input: '$attachments',
+            as: 'attachment',
+            in: {
+              name: '$$attachment.name',
+              url: '$$attachment.url',
+            },
+          },
+        },
+        sendedAt: '$sendedAt',
+      },
+    },
+  ]);
+  if (!foundArchivedList?.[0]) throw new NotFoundError('Message not found');
+
+  return foundArchivedList?.[0];
 }
 
 export async function uploadAttachment({ _id, attachment }) {

@@ -16,12 +16,18 @@ export const get = asyncHandler(async (req, res) => {
   res.status(SUCCESS_CODES.OK).json(messages);
 });
 
-// export const getById = asyncHandler(async (req, res) => {
-//   const { _id } = MessageValidator.getById(req);
-//   const message = await MessageService.getById(_id);
+export const getById = asyncHandler(async (req, res) => {
+  const { _id, type } = MessageValidator.getById(req);
+  const typeToService = {
+    parent: MessageService.getByParentId,
+    draft: MessageService.getDraftById,
+    archived: MessageService.getArchivedById,
+  };
 
-//   res.status(SUCCESS_CODES.OK).json(message);
-// });
+  const message = await typeToService[type](_id);
+
+  res.status(SUCCESS_CODES.OK).json(message);
+});
 
 export const saveDraft = asyncHandler(async (req, res) => {
   const inputData = MessageValidator.saveDraft(req);

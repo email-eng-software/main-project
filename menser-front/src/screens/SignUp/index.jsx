@@ -1,14 +1,12 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 
-import {
-  Container,
-  InputsContainer,
-  Title
-} from "./style";
+import { useNavigate } from 'react-router-dom';
+import { Container, InputsContainer, Title } from './style';
 
 import setToast from '../../utils/toast.utils';
-import Input from "../../components/Input";
-import Button from "../../components/Button";
+import Input from '../../components/Input';
+import Button from '../../components/Button';
+import { useCreateUser } from '../../hooks/query/users';
 
 function SignUp() {
   const [userInfos, setUserInfos] = useState({
@@ -23,9 +21,29 @@ function SignUp() {
     email: false,
     password: false,
   });
+  const navigate = useNavigate();
+
+  const { mutate: createUser, isLoading } = useCreateUser({
+    onSuccess: () => {
+      setToast('success', 'Usuário cadastrado com sucesso.');
+      navigate('/signIn');
+    },
+    onError: (err) => {
+      console.error(err);
+      setToast(
+        'error',
+        'Ocorreu um problema no servidor. Tente novamente mais tarde'
+      );
+    },
+  });
 
   const validateFields = () => {
-    if(!userInfos.name || !userInfos.surname || !userInfos.email || !userInfos.password) {
+    if (
+      !userInfos.name ||
+      !userInfos.surname ||
+      !userInfos.email ||
+      !userInfos.password
+    ) {
       setToast('error', 'Preencha todos os campos.');
       setFieldErrors({
         name: !userInfos.name,
@@ -35,11 +53,13 @@ function SignUp() {
       });
       return true;
     }
-    if (!String(userInfos.email)
-    .toLowerCase()
-    .match(
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-    )) {
+    if (
+      !String(userInfos.email)
+        .toLowerCase()
+        .match(
+          /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+        )
+    ) {
       setToast('error', 'Insira um email válido.');
       setFieldErrors({ ...fieldErrors, email: true });
       return true;
@@ -50,7 +70,7 @@ function SignUp() {
       return true;
     }
     return false;
-  }
+  };
 
   const handleChange = (name, value) => {
     setUserInfos({ ...userInfos, [name]: value });
@@ -59,11 +79,17 @@ function SignUp() {
 
   const handleClick = () => {
     const hasError = validateFields();
-    console.log('SignUp function');
-    if(!hasError) {
-      setToast('success', 'Usuário cadastrado com sucesso.');
-    }
-  }
+    if (hasError) return;
+
+    createUser({
+      email: userInfos.email,
+      firstName: userInfos.name,
+      lastName: userInfos.surname,
+      password: userInfos.password,
+    });
+  };
+
+  if (isLoading) return <div>Carregando...</div>;
 
   return (
     <Container>
@@ -114,7 +140,7 @@ function SignUp() {
         <Button onClick={handleClick}>Cadastrar</Button>
       </InputsContainer>
     </Container>
-  )
+  );
 }
 
 export default SignUp;
