@@ -9,6 +9,7 @@ import { HiInbox } from 'react-icons/hi';
 import setToast from '../utils/toast.utils';
 import { useSaveMessageDraft } from '../hooks/query/messages';
 import useAuthStore from '../stores/auth';
+import { useLogout } from '../hooks/query/sessions';
 
 function hasNotifications(notifications) {
   if (notifications > 0) {
@@ -52,6 +53,18 @@ export default function Layout({ name = 'User', notifications = 0, children }) {
 
   const { mutate: saveMessageDraft, isLoading } = useSaveMessageDraft({
     onSuccess: (draft) => navigate(`/draft/${draft._id}`),
+
+    onError: (err) => {
+      console.error(err);
+      setToast(
+        'error',
+        'Ocorreu um problema no servidor. Tente novamente mais tarde'
+      );
+    },
+  });
+
+  const { mutate: logout } = useLogout({
+    onSuccess: (draft) => navigate(`/signIn`),
 
     onError: (err) => {
       console.error(err);
@@ -125,7 +138,7 @@ export default function Layout({ name = 'User', notifications = 0, children }) {
           >
             <Dropdown.Item>Settings</Dropdown.Item>
             <Dropdown.Divider />
-            <Dropdown.Item>Sign out</Dropdown.Item>
+            <Dropdown.Item onClick={logout}>Sign out</Dropdown.Item>
           </Dropdown>
         </div>
       </Navbar>
