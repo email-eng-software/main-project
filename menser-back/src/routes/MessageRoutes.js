@@ -12,7 +12,9 @@ const processFile = multerConfig({
   sizeLimitInMB: ATTACHMENT_CONFIG.sizeLimitInMB,
 });
 
-MessageRoutes.route('/:userId/users').get(verifyJWT, verifyOwnUser, MessageController.get);
+MessageRoutes.route('/:userId/users/:type').get(verifyJWT, verifyOwnUser, MessageController.get);
+
+MessageRoutes.route('/:_id/:type').get(verifyJWT, MessageController.getById);
 
 MessageRoutes.route('/').post(verifyJWT, MessageController.saveDraft);
 MessageRoutes.post(

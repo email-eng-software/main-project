@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { Container, InputsContainer, Title } from './style';
 
 import setToast from '../../utils/toast.utils';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import { useCreateUser } from '../../hooks/query/users';
 
 function SignUp() {
   const [userInfos, setUserInfos] = useState({
@@ -20,7 +21,21 @@ function SignUp() {
     surname: false,
     email: false,
     password: false,
-    confirmPassword: false,
+  });
+  const navigate = useNavigate();
+
+  const { mutate: createUser, isLoading } = useCreateUser({
+    onSuccess: () => {
+      setToast('success', 'Usuário cadastrado com sucesso.');
+      navigate('/signIn');
+    },
+    onError: (err) => {
+      console.error(err);
+      setToast(
+        'error',
+        'Ocorreu um problema no servidor. Tente novamente mais tarde'
+      );
+    },
   });
 
   const validateFields = () => {
@@ -72,11 +87,17 @@ function SignUp() {
 
   const handleClick = () => {
     const hasError = validateFields();
-    console.log('SignUp function');
-    if (!hasError) {
-      setToast('success', 'Usuário cadastrado com sucesso.');
-    }
+    if (hasError) return;
+
+    createUser({
+      email: userInfos.email,
+      firstName: userInfos.name,
+      lastName: userInfos.surname,
+      password: userInfos.password,
+    });
   };
+
+  if (isLoading) return <div>Carregando...</div>;
 
   return (
     <Container>

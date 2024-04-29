@@ -1,17 +1,10 @@
-import React from "react";
+import React from 'react';
 
-import "../../styles/tailwind.css"
-import Header from "../../components/Header"
-import MessagePage from "../../components/MessagePage";
+import '../../styles/tailwind.css';
+import MessagePage from '../../components/MessagePage';
 
 function Message() {
-  return (
-    <div className="h-screen relative">
-      <Header>
-        <MessagePage />
-      </Header>
-    </div>
-  )
+  return <MessagePage />;
 }
 
 export default Message;

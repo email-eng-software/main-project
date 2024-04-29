@@ -38,7 +38,7 @@ export const create = validate(
         .min(6, 'User password must be atleast 3 characters')
         .max(16, 'User password must be a maximum of 30 characters'),
     }),
-    file: pictureSchema,
+    file: pictureSchema.optional(),
   }),
 );
 

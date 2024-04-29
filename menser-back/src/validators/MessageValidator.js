@@ -22,10 +22,19 @@ export const get = validate(
         .nonnegative()
         .default(0)
         .transform((v) => v && v - 1),
-      type: z.enum(['sended', 'received', 'draft', 'archived']),
     }),
     params: z.object({
+      type: z.enum(['sended', 'received', 'draft', 'archived']),
       userId: objectIdSchema('userId'),
+    }),
+  }),
+);
+
+export const getById = validate(
+  z.object({
+    params: z.object({
+      _id: objectIdSchema('_id'),
+      type: z.enum(['draft', 'archived', 'parent']),
     }),
   }),
 );

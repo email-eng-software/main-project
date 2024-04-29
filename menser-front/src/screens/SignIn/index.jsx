@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 import { Container, InputsContainer, Title } from './style';
 
 import setToast from '../../utils/toast.utils';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+import { useLogin } from '../../hooks/query/sessions';
 
 function SignIn() {
   const [formFields, setFormFields] = useState({
@@ -15,6 +16,22 @@ function SignIn() {
   const [fieldErrors, setFieldErrors] = useState({
     email: false,
     password: false,
+  });
+
+  const navigate = useNavigate();
+
+  const { mutate: login, isLoading } = useLogin({
+    onSuccess: () => {
+      setToast('success', 'Usuário logado com sucesso.');
+      navigate('/');
+    },
+    onError: (err) => {
+      console.error(err);
+      setToast(
+        'error',
+        'Ocorreu um problema no servidor. Tente novamente mais tarde'
+      );
+    },
   });
 
   const validateFields = () => {
@@ -36,11 +53,12 @@ function SignIn() {
 
   const handleClick = () => {
     const hasError = validateFields();
-    if (!hasError) {
-      console.log('SignIn function');
-      setToast('success', 'Usuário cadastrado com sucesso.');
-    }
+    if (hasError) return;
+
+    login({ email: formFields.email, password: formFields.password });
   };
+
+  if (isLoading) return <div>Carregando...</div>;
 
   return (
     <Container>

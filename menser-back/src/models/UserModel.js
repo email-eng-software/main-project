@@ -21,7 +21,7 @@ const UserSchema = new mongoose.Schema(
     },
     profilePicture: {
       type: PictureFileSchema,
-      required: true,
+      // required: true,
     },
     email: {
       type: String,
@@ -62,14 +62,8 @@ UserSchema.pre(
     return Promise.all([
       awsS3.deleteFile(this.profilePicture.key),
       UserSessionTokenModel.deleteMany({ user: this._id }).exec(),
-      MessageModel.updateMany(
-        { sender: this._id },
-        { $set: { isDeleted: true } },
-      ),
-      MessageRecipientsModel.updateMany(
-        { recipient: this._id },
-        { $set: { isDeleted: true } },
-      ),
+      MessageModel.updateMany({ sender: this._id }, { $set: { isDeleted: true } }),
+      MessageRecipientsModel.updateMany({ recipient: this._id }, { $set: { isDeleted: true } }),
     ]);
   },
 );
