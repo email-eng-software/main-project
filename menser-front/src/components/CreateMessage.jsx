@@ -45,7 +45,7 @@ export default function CreateMessage() {
         <form className="flex flex-col gap-4 px-4">
             <div className="max-w-md">
                 <div className="mb-2 block">
-                    <Label htmlFor="user" value="Destinatário:" />
+                    <Label htmlFor="user" value="*Destinatário:" />
                 </div>
                 <TextInput onChange={(e) => handleChange('user', e.target.value)} id="user" type="text" placeholder="usuário" required />
             </div>
@@ -57,9 +57,9 @@ export default function CreateMessage() {
             </div>
             <div className="w-10/12">
                 <div className="mb-2 block">
-                    <Label htmlFor="content" value="Mensagem:" />
+                    <Label htmlFor="content" value="*Mensagem:" />
                 </div>
-                <Textarea onChange={(e) => handleChange('messsage', e.target.value)} id="content" placeholder="Mensagem..." required rows={10} className="resize-none" />
+                <Textarea onChange={(e) => handleChange('message', e.target.value)} id="content" placeholder="Mensagem..." required rows={10} className="resize-none" />
             </div>
             <Button className="max-w-md" onClick={handleClick}>Enviar</Button>
         </form>
