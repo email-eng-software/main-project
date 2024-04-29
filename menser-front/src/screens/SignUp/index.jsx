@@ -1,14 +1,11 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
-import {
-  Container,
-  InputsContainer,
-  Title
-} from "./style";
+import { Container, InputsContainer, Title } from './style';
 
 import setToast from '../../utils/toast.utils';
-import Input from "../../components/Input";
-import Button from "../../components/Button";
+import Input from '../../components/Input';
+import Button from '../../components/Button';
 
 function SignUp() {
   const [userInfos, setUserInfos] = useState({
@@ -16,30 +13,41 @@ function SignUp() {
     surname: '',
     email: '',
     password: '',
+    confirmPassword: '',
   });
   const [fieldErrors, setFieldErrors] = useState({
     name: false,
     surname: false,
     email: false,
     password: false,
+    confirmPassword: false,
   });
 
   const validateFields = () => {
-    if(!userInfos.name || !userInfos.surname || !userInfos.email || !userInfos.password) {
+    if (
+      !userInfos.name ||
+      !userInfos.surname ||
+      !userInfos.email ||
+      !userInfos.password ||
+      !userInfos.confirmPassword
+    ) {
       setToast('error', 'Preencha todos os campos.');
       setFieldErrors({
         name: !userInfos.name,
         surname: !userInfos.surname,
         email: !userInfos.email,
         password: !userInfos.password,
+        confirmPassword: !userInfos.confirmPassword,
       });
       return true;
     }
-    if (!String(userInfos.email)
-    .toLowerCase()
-    .match(
-      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-    )) {
+    if (
+      !String(userInfos.email)
+        .toLowerCase()
+        .match(
+          /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+        )
+    ) {
       setToast('error', 'Insira um email válido.');
       setFieldErrors({ ...fieldErrors, email: true });
       return true;
@@ -49,8 +57,13 @@ function SignUp() {
       setFieldErrors({ ...fieldErrors, password: true });
       return true;
     }
+    if (userInfos.password !== userInfos.confirmPassword) {
+      setToast('error', 'As senhas precisam ser iguais');
+      setFieldErrors({ ...fieldErrors, password: true, confirmPassword: true });
+      return true;
+    }
     return false;
-  }
+  };
 
   const handleChange = (name, value) => {
     setUserInfos({ ...userInfos, [name]: value });
@@ -60,10 +73,10 @@ function SignUp() {
   const handleClick = () => {
     const hasError = validateFields();
     console.log('SignUp function');
-    if(!hasError) {
+    if (!hasError) {
       setToast('success', 'Usuário cadastrado com sucesso.');
     }
-  }
+  };
 
   return (
     <Container>
@@ -111,10 +124,24 @@ function SignUp() {
           value={userInfos.password}
           error={fieldErrors.password}
         />
+        <Input
+          label="Confirmar Senha"
+          id="confirmarSenha"
+          name="confirmarSenha"
+          placeholder="Confirme sua senha"
+          required
+          onChange={(event) =>
+            handleChange('confirmPassword', event.target.value)
+          }
+          type="password"
+          value={userInfos.confirmPassword}
+          error={fieldErrors.confirmPassword}
+        />
         <Button onClick={handleClick}>Cadastrar</Button>
+        <Link to="/signin">Já possui conta? Faça login</Link>
       </InputsContainer>
     </Container>
-  )
+  );
 }
 
 export default SignUp;

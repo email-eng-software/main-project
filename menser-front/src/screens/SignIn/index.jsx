@@ -1,14 +1,11 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
-import {
-  Container,
-  InputsContainer,
-  Title
-} from "./style";
+import { Container, InputsContainer, Title } from './style';
 
 import setToast from '../../utils/toast.utils';
-import Input from "../../components/Input";
-import Button from "../../components/Button";
+import Input from '../../components/Input';
+import Button from '../../components/Button';
 
 function SignIn() {
   const [formFields, setFormFields] = useState({
@@ -21,7 +18,7 @@ function SignIn() {
   });
 
   const validateFields = () => {
-    if(!formFields.email || !formFields.password) {
+    if (!formFields.email || !formFields.password) {
       setToast('error', 'Preencha todos os campos.');
       setFieldErrors({
         email: !formFields.email,
@@ -30,7 +27,7 @@ function SignIn() {
       return true;
     }
     return false;
-  }
+  };
 
   const handleChange = (name, value) => {
     setFormFields({ ...formFields, [name]: value });
@@ -39,11 +36,11 @@ function SignIn() {
 
   const handleClick = () => {
     const hasError = validateFields();
-    if(!hasError) {
+    if (!hasError) {
       console.log('SignIn function');
       setToast('success', 'Usuário cadastrado com sucesso.');
     }
-  }
+  };
 
   return (
     <Container>
@@ -72,9 +69,10 @@ function SignIn() {
           error={fieldErrors.password}
         />
         <Button onClick={handleClick}>Entrar</Button>
+        <Link to="/signup">Não possui conta? Faça seu cadastro</Link>
       </InputsContainer>
     </Container>
-  )
+  );
 }
 
 export default SignIn;
