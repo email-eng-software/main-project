@@ -396,14 +396,18 @@ export async function getArchived({ userId, search, limit, page }) {
     {
       $match: {
         $or: [
-          { $and: [{ sender: new ObjectId(userId) }, { isArchived: true }] },
           {
-            $and: [
-              {
-                'messageRecipients.recipient': new ObjectId(userId),
-                'messageRecipients.isArchived': true,
-              },
-            ],
+            // $and: [{ sender: new ObjectId(userId) }, { isArchived: true }]
+            sender: new ObjectId(userId),
+          },
+          {
+            'messageRecipients.recipient': new ObjectId(userId),
+            // $and: [
+            //   {
+            //     'messageRecipients.recipient': new ObjectId(userId),
+            //     'messageRecipients.isArchived': true,
+            //   },
+            // ],
           },
         ],
       },
@@ -531,94 +535,96 @@ export async function saveDraft(inputData) {
 }
 
 export function getByParentId(parentId) {
-  return MessageModel.aggregate([
-    { $match: { _id: new ObjectId(parentId), status: STATUS.SENDED, responseTo: null } },
-    {
-      $graphLookup: {
-        from: COLLECTION_NAMES.MESSAGE,
-        startWith: '$_id',
-        connectFromField: '_id',
-        connectToField: 'responseTo',
-        depthField: 'level',
-        as: 'responses',
-      },
-    },
-    {
-      $unwind: {
-        path: '$responses',
-        preserveNullAndEmptyArrays: true,
-      },
-    },
-    { $sort: { 'responses.level': -1 } },
-    {
-      $group: {
-        _id: '$_id',
-        responseTo: { $first: '$responseTo' },
-        sender: { $first: '$sender' },
-        subject: { $first: '$subject' },
-        content: { $first: '$content' },
-        recipientsStr: { $first: '$recipientsStr' },
-        responses: { $push: '$responses' },
-      },
-    },
-    {
-      $addFields: {
-        responses: {
-          $reduce: {
-            input: '$responses',
-            initialValue: { level: -1, presentChild: [], prevChild: [] },
-            in: {
-              $let: {
-                vars: {
-                  prev: {
-                    $cond: [
-                      { $eq: ['$$value.level', '$$this.level'] },
-                      '$$value.prevChild',
-                      '$$value.presentChild',
-                    ],
-                  },
-                  current: {
-                    $cond: [{ $eq: ['$$value.level', '$$this.level'] }, '$$value.presentChild', []],
-                  },
-                },
-                in: {
-                  level: '$$this.level',
-                  prevChild: '$$prev',
-                  presentChild: {
-                    $concatArrays: [
-                      '$$current',
-                      [
-                        {
-                          $mergeObjects: [
-                            '$$this',
-                            // {
-                            //   _id: '$$this._id',
-                            //   sender: '$$this.sender',
-                            //   responseTo: '$$this.responseTo',
-                            // },
-                            {
-                              responses: {
-                                $filter: {
-                                  input: '$$prev',
-                                  as: 'e',
-                                  cond: { $eq: ['$$e.responseTo', '$$this._id'] },
-                                },
-                              },
-                            },
-                          ],
-                        },
-                      ],
-                    ],
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    { $addFields: { responses: '$responses.presentChild' } },
-  ]);
+  return MessageModel.findById(parentId).populate('sender').lean().exec();
+  // return MessageModel.aggregate([
+  //   { $match: { _id: new ObjectId(parentId), status: STATUS.SENDED, responseTo: null } },
+  //   {
+  //     $graphLookup: {
+  //       from: COLLECTION_NAMES.MESSAGE,
+  //       startWith: '$_id',
+  //       connectFromField: '_id',
+  //       connectToField: 'responseTo',
+  //       depthField: 'level',
+  //       as: 'responses',
+  //     },
+  //   },
+  //   {
+  //     $unwind: {
+  //       path: '$responses',
+  //       preserveNullAndEmptyArrays: true,
+  //     },
+  //   },
+  //   { $sort: { 'responses.level': -1 } },
+  //   {
+  //     $group: {
+  //       _id: '$_id',
+  //       responseTo: { $first: '$responseTo' },
+  //       sender: { $first: '$sender' },
+  //       subject: { $first: '$subject' },
+  //       content: { $first: '$content' },
+  //       sendedAt: { $first: '$sendedAt' },
+  //       recipientsStr: { $first: '$recipientsStr' },
+  //       responses: { $push: '$responses' },
+  //     },
+  //   },
+  //   {
+  //     $addFields: {
+  //       responses: {
+  //         $reduce: {
+  //           input: '$responses',
+  //           initialValue: { level: -1, presentChild: [], prevChild: [] },
+  //           in: {
+  //             $let: {
+  //               vars: {
+  //                 prev: {
+  //                   $cond: [
+  //                     { $eq: ['$$value.level', '$$this.level'] },
+  //                     '$$value.prevChild',
+  //                     '$$value.presentChild',
+  //                   ],
+  //                 },
+  //                 current: {
+  //                   $cond: [{ $eq: ['$$value.level', '$$this.level'] }, '$$value.presentChild', []],
+  //                 },
+  //               },
+  //               in: {
+  //                 level: '$$this.level',
+  //                 prevChild: '$$prev',
+  //                 presentChild: {
+  //                   $concatArrays: [
+  //                     '$$current',
+  //                     [
+  //                       {
+  //                         $mergeObjects: [
+  //                           '$$this',
+  //                           // {
+  //                           //   _id: '$$this._id',
+  //                           //   sender: '$$this.sender',
+  //                           //   responseTo: '$$this.responseTo',
+  //                           // },
+  //                           {
+  //                             responses: {
+  //                               $filter: {
+  //                                 input: '$$prev',
+  //                                 as: 'e',
+  //                                 cond: { $eq: ['$$e.responseTo', '$$this._id'] },
+  //                               },
+  //                             },
+  //                           },
+  //                         ],
+  //                       },
+  //                     ],
+  //                   ],
+  //                 },
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //     },
+  //   },
+  //   { $addFields: { responses: '$responses.presentChild' } },
+  // ]);
 }
 export async function getDraftById(_id) {
   const foundDraft = await MessageModel.findOne({ _id, status: STATUS.DRAFT }).lean().exec();
