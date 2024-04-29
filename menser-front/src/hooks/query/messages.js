@@ -2,11 +2,24 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 
 import {
   getMessageById,
+  getMessages,
   saveMessageDraft,
   sendMessage,
   updateMessageDraft,
 } from '../../services/api/endpoints';
 
+export function useGetMessages({
+  userId,
+  onSuccess = () => {},
+  onError = (err) => console.log(err),
+} = {}) {
+  return useQuery({
+    queryKey: ['messages', 'user', userId],
+    queryFn: () => getMessages(userId),
+    onSuccess,
+    onError,
+  });
+}
 export function useGetMessageById({
   messageId,
   type,

@@ -2,12 +2,13 @@ import React from 'react';
 import Message from './Message';
 
 export default function MessageList({ messages = [] }) {
-  return messages.map((message) => (
+  return messages.map(({ _id, sender, subject, sendedAt, recipients }) => (
     <Message
-      author={message.author}
-      route={message.id}
-      header={message.header}
-      date={message.date}
+      _id={_id}
+      recipients={recipients}
+      sender={sender}
+      subject={subject}
+      sendedAt={sendedAt}
     />
   ));
 }

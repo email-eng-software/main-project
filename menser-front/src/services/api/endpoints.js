@@ -46,6 +46,12 @@ export const deleteUser = async (_id) => {
 };
 
 // Messages
+export const getMessages = async (userId) => {
+  const { data } = await api.get(`/messages/${userId}/users/archived`);
+
+  return data;
+};
+
 export const getMessageById = async ({ messageId, type }) => {
   const { data } = await api.get(`/messages/${messageId}/${type}`);
 
