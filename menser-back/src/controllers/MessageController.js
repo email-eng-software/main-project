@@ -52,10 +52,10 @@ export const send = asyncHandler(async (req, res) => {
 });
 
 export const toggleState = asyncHandler(async (req, res) => {
-  const { _id, state } = MessageValidator.toggleState(req);
-  const updatedMessage = await MessageService.toggleState({ _id, state });
+  const inputData = MessageValidator.toggleState(req);
+  await MessageService.toggleState(inputData);
 
-  res.status(SUCCESS_CODES.OK).json(updatedMessage);
+  res.sendStatus(SUCCESS_CODES.NO_CONTENT);
 });
 
 export const destroy = asyncHandler(async (req, res) => {

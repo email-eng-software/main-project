@@ -80,8 +80,9 @@ export const toggleState = validate(
   z.object({
     params: z.object({
       _id: objectIdSchema('Message _id'),
-      state: z.enum(['favorite', 'archive']),
+      state: z.enum(['read', 'favorite', 'archive']),
     }),
+    query: z.object({ userId: objectIdSchema('userId').optional() }),
   }),
 );
 

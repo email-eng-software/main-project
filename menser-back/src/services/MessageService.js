@@ -9,21 +9,91 @@ import UserModel from '../models/UserModel.js';
 import { COLLECTION_NAMES } from '../utils/general/constants.js';
 
 export async function getSended({ userId, search, limit, page }) {
-  const result = await MessageModel.aggregate([
+  const pipeline = [
     {
       $match: {
         isDeleted: false,
         isArchived: false,
         status: STATUS.SENDED,
+        sender: new ObjectId(userId),
+        responseTo: null,
+      },
+    },
+    {
+      $graphLookup: {
+        from: COLLECTION_NAMES.MESSAGE,
+        startWith: '$_id',
+        connectFromField: '_id',
+        connectToField: 'responseTo',
+        as: 'responses',
+      },
+    },
+    {
+      $set: {
+        lastSended: {
+          $ifNull: [
+            {
+              $first: {
+                $sortArray: {
+                  input: {
+                    $filter: {
+                      input: '$responses',
+                      cond: { $eq: ['$$this.sender', new ObjectId(userId)] },
+                    },
+                  },
+                  sortBy: {
+                    sendedAt: -1,
+                  },
+                },
+              },
+            },
+            '$$ROOT',
+          ],
+        },
+      },
+    },
+    {
+      $set: {
+        lastMessage: {
+          $ifNull: [
+            {
+              $first: {
+                $sortArray: {
+                  input: '$responses',
+                  sortBy: {
+                    createdAt: -1,
+                  },
+                },
+              },
+            },
+            '$$ROOT',
+          ],
+        },
+      },
+    },
+    {
+      $sort: {
+        'lastMessage.createdAt': -1,
       },
     },
     {
       $lookup: {
         from: COLLECTION_NAMES.MESSAGE_RECIPIENTS,
-        localField: '_id',
+        localField: 'lastSended._id',
         foreignField: 'message',
         as: 'messageRecipients',
       },
+    },
+    {
+      $lookup: {
+        from: COLLECTION_NAMES.USER,
+        localField: 'lastSended.sender',
+        foreignField: '_id',
+        as: 'senderDoc',
+      },
+    },
+    {
+      $unwind: '$senderDoc',
     },
     {
       $lookup: {
@@ -35,13 +105,26 @@ export async function getSended({ userId, search, limit, page }) {
     },
     {
       $project: {
-        subject: '$subject',
-        content: '$content',
+        _id: '$lastSended._id',
+        totalExchangedMessages: { $add: [{ $size: '$responses' }, 1] },
+        sender: {
+          _id: '$senderDoc._id',
+          firstName: '$senderDoc.firstName',
+          lastName: '$senderDoc.lastName',
+          email: '$senderDoc.email',
+          profilePicture: {
+            name: '$senderDoc.profilePicture.name',
+            url: '$senderDoc.profilePicture.url',
+          },
+        },
+        subject: '$lastSended.subject',
+        content: '$lastSended.content',
         recipients: {
           $map: {
             input: '$recipients',
             as: 'recipient',
             in: {
+              _id: '$$recipient._id',
               firstName: '$$recipient.firstName',
               lastName: '$$recipient.lastName',
               email: '$$recipient.email',
@@ -52,7 +135,286 @@ export async function getSended({ userId, search, limit, page }) {
             },
           },
         },
-        attchments: {
+        attachments: {
+          $map: {
+            input: '$lastSended.attachments',
+            as: 'attachment',
+            in: {
+              name: '$$attachment.name',
+              url: '$$attachment.url',
+            },
+          },
+        },
+        sendedAt: '$lastSended.sendedAt',
+      },
+    },
+  ];
+
+  if (limit) pipeline.push({ $skip: page * limit }, { $limit: limit });
+  // TODO: add search option
+  return MessageModel.aggregate(pipeline);
+}
+
+export async function getReceived({ userId, search, limit, page }) {
+  const pipeline = [
+    {
+      $match: {
+        isDeleted: false,
+        isArchived: false,
+        recipient: new ObjectId(userId),
+      },
+    },
+    {
+      $lookup: {
+        from: COLLECTION_NAMES.MESSAGE,
+        localField: 'message',
+        foreignField: '_id',
+        as: 'messageDoc',
+      },
+    },
+    { $unwind: '$messageDoc' },
+    { $replaceRoot: { newRoot: '$messageDoc' } },
+    {
+      $match: {
+        status: STATUS.SENDED,
+      },
+    },
+    {
+      $graphLookup: {
+        from: COLLECTION_NAMES.MESSAGE,
+        startWith: '$_id',
+        connectFromField: '_id',
+        connectToField: 'responseTo',
+        as: 'responses',
+      },
+    },
+    {
+      $set: {
+        lastSended: {
+          $ifNull: [
+            {
+              $first: {
+                $sortArray: {
+                  input: {
+                    $filter: {
+                      input: '$responses',
+                      cond: { $ne: ['$$this.sender', new ObjectId(userId)] },
+                    },
+                  },
+                  sortBy: {
+                    sendedAt: -1,
+                  },
+                },
+              },
+            },
+            '$$ROOT',
+          ],
+        },
+      },
+    },
+    {
+      $set: {
+        lastMessage: {
+          $ifNull: [
+            {
+              $first: {
+                $sortArray: {
+                  input: '$responses',
+                  sortBy: {
+                    createdAt: -1,
+                  },
+                },
+              },
+            },
+            '$$ROOT',
+          ],
+        },
+      },
+    },
+    {
+      $sort: {
+        'lastMessage.createdAt': -1,
+      },
+    },
+    {
+      $lookup: {
+        from: COLLECTION_NAMES.MESSAGE_RECIPIENTS,
+        localField: 'lastSended._id',
+        foreignField: 'message',
+        as: 'messageRecipients',
+      },
+    },
+    {
+      $lookup: {
+        from: COLLECTION_NAMES.USER,
+        localField: 'lastSended.sender',
+        foreignField: '_id',
+        as: 'senderDoc',
+      },
+    },
+    {
+      $unwind: '$senderDoc',
+    },
+    {
+      $lookup: {
+        from: COLLECTION_NAMES.USER,
+        localField: 'messageRecipients.recipient',
+        foreignField: '_id',
+        as: 'recipients',
+      },
+    },
+    {
+      $project: {
+        _id: '$lastSended._id',
+        totalExchangedMessages: { $add: [{ $size: '$responses' }, 1] },
+        sender: {
+          _id: '$senderDoc._id',
+          firstName: '$senderDoc.firstName',
+          lastName: '$senderDoc.lastName',
+          email: '$senderDoc.email',
+          profilePicture: {
+            name: '$senderDoc.profilePicture.name',
+            url: '$senderDoc.profilePicture.url',
+          },
+        },
+        subject: '$lastSended.subject',
+        content: '$lastSended.content',
+        recipients: {
+          $map: {
+            input: '$recipients',
+            as: 'recipient',
+            in: {
+              _id: '$$recipient._id',
+              firstName: '$$recipient.firstName',
+              lastName: '$$recipient.lastName',
+              email: '$$recipient.email',
+              profilePicture: {
+                name: '$$recipient.profilePicture.name',
+                url: '$$recipient.profilePicture.url',
+              },
+            },
+          },
+        },
+        attachments: {
+          $map: {
+            input: '$lastSended.attachments',
+            as: 'attachment',
+            in: {
+              name: '$$attachment.name',
+              url: '$$attachment.url',
+            },
+          },
+        },
+        sendedAt: '$lastSended.sendedAt',
+      },
+    },
+    {
+      $group: {
+        _id: '$_id',
+        totalExchangedMessages: { $first: '$totalExchangedMessages' },
+        sender: { $first: '$sender' },
+        subject: { $first: '$subject' },
+        content: { $first: '$content' },
+        recipients: { $first: '$recipients' },
+        attachments: { $first: '$attachments' },
+        sendedAt: { $first: '$sendedAt' },
+      },
+    },
+  ];
+
+  if (limit) pipeline.push({ $skip: page * limit }, { $limit: limit });
+  // TODO: add search option
+  return MessageRecipientsModel.aggregate(pipeline);
+}
+
+export async function getDraft({ userId, search, limit, page }) {
+  const pipeline = [
+    {
+      $match: {
+        sender: new ObjectId(userId),
+        status: STATUS.DRAFT,
+      },
+    },
+  ];
+
+  if (limit) pipeline.push({ $skip: page * limit }, { $limit: limit });
+
+  return MessageModel.aggregate(pipeline);
+}
+
+export async function getArchived({ userId, search, limit, page }) {
+  const pipeline = [
+    {
+      $match: {
+        isDeleted: false,
+        isArchived: true,
+        status: STATUS.SENDED,
+      },
+    },
+    {
+      $lookup: {
+        from: COLLECTION_NAMES.MESSAGE_RECIPIENTS,
+        localField: '_id',
+        foreignField: 'message',
+        as: 'messageRecipients',
+      },
+    },
+    { $unwind: '$messageRecipients' },
+    {
+      $match: {
+        $or: [
+          { sender: new ObjectId(userId) },
+          { 'messageRecipients.recipient': new ObjectId(userId) },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: COLLECTION_NAMES.USER,
+        localField: 'messageRecipients.recipient',
+        foreignField: '_id',
+        as: 'recipient',
+      },
+    },
+    {
+      $unwind: '$recipient',
+    },
+    {
+      $lookup: {
+        from: COLLECTION_NAMES.USER,
+        localField: 'sender',
+        foreignField: '_id',
+        as: 'senderDoc',
+      },
+    },
+    {
+      $unwind: '$senderDoc',
+    },
+    {
+      $project: {
+        sender: {
+          _id: '$senderDoc._id',
+          firstName: '$senderDoc.firstName',
+          lastName: '$senderDoc.lastName',
+          email: '$senderDoc.email',
+          profilePicture: {
+            name: '$senderDoc.profilePicture.name',
+            url: '$senderDoc.profilePicture.url',
+          },
+        },
+        subject: '$subject',
+        content: '$content',
+        recipients: {
+          _id: '$recipient._id',
+          firstName: '$recipient.firstName',
+          lastName: '$recipient.lastName',
+          email: '$recipient.email',
+          profilePicture: {
+            name: '$recipient.profilePicture.name',
+            url: '$recipient.profilePicture.url',
+          },
+        },
+        attachments: {
           $map: {
             input: '$attachments',
             as: 'attachment',
@@ -65,149 +427,22 @@ export async function getSended({ userId, search, limit, page }) {
         sendedAt: '$sendedAt',
       },
     },
-    // {
-    //   $unwind: '$course',
-    // },
-    // {
-    //   $lookup: {
-    //     from: COLLECTION_NAMES.CHAPTER,
-    //     localField: 'course._id',
-    //     foreignField: 'course',
-    //     as: 'chapters',
-    //   },
-    // },
-    // {
-    //   $unwind: '$chapters',
-    // },
-    // {
-    //   $lookup: {
-    //     from: COLLECTION_NAMES.VIDEO,
-    //     localField: 'chapters._id',
-    //     foreignField: 'chapter',
-    //     as: 'videos',
-    //   },
-    // },
-    // {
-    //   $unwind: {
-    //     path: '$videos',
-    //   },
-    // },
-    // {
-    //   $lookup: {
-    //     from: COLLECTION_NAMES.USER_PROGRESS,
-    //     let: {
-    //       userId: '$user',
-    //       videoId: '$videos._id',
-    //     },
-    //     pipeline: [
-    //       {
-    //         $match: {
-    //           $expr: {
-    //             $and: [
-    //               { $eq: ['$$userId', '$user'] },
-    //               { $eq: ['$$videoId', '$video'] },
-    //             ],
-    //           },
-    //         },
-    //       },
-    //     ],
-    //     as: 'progress',
-    //   },
-    // },
-    // {
-    //   $unwind: {
-    //     path: '$progress',
-    //     preserveNullAndEmptyArrays: true,
-    //   },
-    // },
-    // {
-    //   $sort: {
-    //     'videos.createdAt': 1,
-    //   },
-    // },
-    // {
-    //   $group: {
-    //     _id: {
-    //       courseId: '$course._id',
-    //       chapterId: '$chapters._id',
-    //     },
-    //     lastWatchedVideo: { $first: '$lastWatchedVideo' },
-    //     course: { $first: '$course' },
-    //     chapter: {
-    //       $first: {
-    //         _id: '$chapters._id',
-    //         title: '$chapters.title',
-    //         createdAt: '$chapters.createdAt',
-    //       },
-    //     },
-    //     videosPerChapter: {
-    //       $push: {
-    //         _id: '$videos._id',
-    //         title: '$videos.title',
-    //         description: '$videos.description',
-    //         formatedDuration: {
-    //           $dateToString: {
-    //             format: '%H:%M',
-    //             date: {
-    //               $toDate: {
-    //                 $multiply: ['$videos.duration', 1000], // Convert seconds to milliseconds
-    //               },
-    //             },
-    //           },
-    //         },
-    //         progress: { $ifNull: ['$progress.progress', 0] },
-    //         isCompleted: '$progress.isCompleted',
-    //       },
-    //     },
-    //   },
-    // },
-    // {
-    //   $sort: {
-    //     'chapter.createdAt': 1,
-    //   },
-    // },
-    // {
-    //   $group: {
-    //     _id: '$_id.courseId',
-    //     title: { $first: '$course.title' },
-    //     description: { $first: '$course.description' },
-    //     lastWatchedVideo: {
-    //       $first: {
-    //         $ifNull: [
-    //           '$lastWatchedVideo',
-    //           { $arrayElemAt: ['$videosPerChapter._id', 0] },
-    //         ],
-    //       },
-    //     },
-    //     chapters: {
-    //       $push: {
-    //         $mergeObjects: ['$chapter', { videos: '$videosPerChapter' }],
-    //       },
-    //     },
-    //   },
-    // },
-  ]);
-
-  return result;
-}
-
-export async function getReceived({ userId, search, limit, page }) {
-  return [];
-}
-
-export async function getDraft({ userId, search, limit, page }) {
-  return MessageModel.aggregate([
     {
-      $match: {
-        sender: new ObjectId(userId),
-        status: STATUS.DRAFT,
+      $group: {
+        _id: '$_id',
+        sender: { $first: '$sender' },
+        subject: { $first: '$subject' },
+        content: { $first: '$content' },
+        recipients: { $push: '$recipients' },
+        attachments: { $first: '$attachments' },
+        sendedAt: { $first: '$sendedAt' },
       },
     },
-  ]);
-}
+  ];
 
-export async function getArchived({ userId, search, limit, page }) {
-  return [];
+  if (limit) pipeline.push({ $skip: page * limit }, { $limit: limit });
+
+  return MessageModel.aggregate(pipeline);
 }
 
 export async function saveDraft(inputData) {
@@ -215,20 +450,25 @@ export async function saveDraft(inputData) {
   if (!foundSender) throw new NotFoundError('Message sender not found');
 
   if (inputData.responseTo) {
-    const messageToRespond = await MessageModel.findById(inputData.responseTo).lean().exec();
-    if (!messageToRespond || messageToRespond.status === STATUS.DRAFT)
-      throw new NotFoundError('Message to respond not found');
+    const messageToRespond = await MessageModel.findOne({
+      _id: inputData.responseTo,
+      status: STATUS.SENDED,
+    })
+      .populate('sender')
+      .lean()
+      .exec();
+    if (!messageToRespond) throw new NotFoundError('Message to respond not found');
+
+    inputData.recipientsStr = messageToRespond.sender.email;
+    // TODO: check if the sender is in the recipient list of the messageToRespond
   }
 
   return MessageModel.create(inputData);
 }
 
 export async function uploadAttachment({ _id, attachment }) {
-  const foundMessage = await MessageModel.findById(_id).exec();
+  const foundMessage = await MessageModel.findOne({ _id, status: STATUS.DRAFT }).exec();
   if (!foundMessage) throw new NotFoundError('Message not found');
-
-  if (foundMessage.status !== STATUS.DRAFT)
-    throw new ForbiddenError('Cannot update a sended message');
 
   foundMessage.attachments.push(attachment);
   await foundMessage.save();
@@ -246,7 +486,7 @@ async function deleteAttachmentsFromS3(foundMessageAttachments, inputAttachments
 }
 
 export async function send({ _id, inputData }) {
-  const foundMessage = await MessageModel.findById(_id).exec();
+  const foundMessage = await MessageModel.findOne({ _id, status: STATUS.DRAFT }).exec();
   if (!foundMessage) throw new NotFoundError('Message not found');
 
   if (foundMessage.status !== STATUS.DRAFT) throw new ForbiddenError('Message already sended');
@@ -255,7 +495,7 @@ export async function send({ _id, inputData }) {
   const recipients = await UserModel.find({ email: { $in: recipientEmails } })
     .lean()
     .exec();
-  if (!recipients) throw NotFoundError('No recipient found');
+  if (!recipients?.length) throw new NotFoundError('No recipient found');
 
   await deleteAttachmentsFromS3(foundMessage.attachments, inputData.attachments);
 
@@ -263,26 +503,34 @@ export async function send({ _id, inputData }) {
     recipient: recipient._id,
     message: foundMessage._id,
   }));
-  await MessageRecipientsModel.create(messageRecipientsData);
+  await MessageRecipientsModel.insertMany(messageRecipientsData);
 
   return foundMessage.set({ ...inputData, status: STATUS.SENDED, sendedAt: Date.now() }).save();
 }
 
 export async function updateDraft({ _id, inputData }) {
-  const foundMessage = await MessageModel.findById(_id).exec();
+  const foundMessage = await MessageModel.findOne({ _id, status: STATUS.DRAFT }).exec();
   if (!foundMessage) throw new NotFoundError('Message not found');
-
-  if (foundMessage.status !== STATUS.DRAFT)
-    throw new ForbiddenError('Cannot update a sended message');
 
   await deleteAttachmentsFromS3(foundMessage.attachments, inputData.attachments);
 
   return foundMessage.set(inputData).save();
 }
 
-export async function toggleState({ _id, state }) {
+export async function toggleState({ _id, userId, state }) {
   const foundMessage = await MessageModel.findById(_id).exec();
   if (!foundMessage) throw new NotFoundError('Message not found');
+
+  if (state === 'read') {
+    const messageRecipient = await MessageRecipientsModel.findOne({
+      recipient: userId,
+      message: _id,
+    }).exec();
+
+    if (messageRecipient && !messageRecipient.isRead) {
+      await messageRecipient.set({ isRead: true }).save();
+    }
+  }
 
   const stateToField = {
     archive: 'isArchived',
@@ -291,7 +539,7 @@ export async function toggleState({ _id, state }) {
   const field = stateToField[state];
   foundMessage[field] = !foundMessage[field];
 
-  return foundMessage.save();
+  await foundMessage.set({ [field]: !foundMessage[field] }).save();
 }
 
 export async function destroy(_id) {
