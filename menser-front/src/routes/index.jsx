@@ -4,6 +4,7 @@ import Home from "../screens/Home";
 import SignIn from "../screens/SignIn";
 import SignUp from "../screens/SignUp";
 import Message from "../screens/Message";
+import NewMessage from "../screens/NewMessage";
 
 
 function AppRoutes() {
@@ -19,6 +20,10 @@ function AppRoutes() {
     {
       path: '/signUp',
       element: <SignUp />,
+    },
+    {
+      path: '/new',
+      element: <NewMessage />,
     },
     {
       path: '*',
